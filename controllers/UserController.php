@@ -28,6 +28,7 @@ class UserController extends Controller
                 'class' => VerbFilter::class,
                 'actions' => [
                     'create' => ['POST'],
+                    'delete' => ['DELETE'],
                 ],
             ],
         ];
@@ -56,6 +57,36 @@ class UserController extends Controller
         return [
             'success' => false,
             'errors' => $model->errors,
+        ];
+    }
+
+    public function actionDelete(int $id): array
+    {
+        $model = UserRecord::findOne($id);
+
+        if ($model === null) {
+            Yii::$app->response->statusCode = 404;
+
+            return [
+                'success' => false,
+                'error' => 'User not found',
+            ];
+        }
+
+        if ($model->delete() !== false) {
+            Yii::$app->response->statusCode = 200;
+
+            return [
+                'success' => true,
+                'message' => 'User deleted',
+            ];
+        }
+
+        Yii::$app->response->statusCode = 422;
+
+        return [
+            'success' => false,
+            'errors' => $model->errors ?? [],
         ];
     }
 }
