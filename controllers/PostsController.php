@@ -36,9 +36,38 @@ class PostsController extends Controller
                     'index' => ['GET'],
                     'combined' => ['GET'],
                     'create' => ['POST'],
+                    'user' => ['GET'],
                 ],
             ],
         ];
+    }
+
+    /**
+     * Return all posts for a given user id.
+     * GET /posts/user?id=123 or /posts/user?user_id=123
+     */
+    public function actionUser(): array
+    {
+        $userId = Yii::$app->request->get('id', Yii::$app->request->get('user_id'));
+
+        if (empty($userId)) {
+            Yii::$app->response->statusCode = 400;
+
+            return ['success' => false, 'error' => 'user id is required'];
+        }
+
+        // optional: verify user exists
+        $user = \app\models\UserRecord::findOne((int)$userId);
+
+        if ($user === null) {
+            Yii::$app->response->statusCode = 404;
+
+            return ['success' => false, 'error' => 'user not found'];
+        }
+
+        $posts = Post::find()->where(['user_id' => (int)$userId])->orderBy(['created_at' => SORT_DESC])->asArray()->all();
+
+        return ['success' => true, 'data' => $posts];
     }
 
     public function actionIndex(): array
