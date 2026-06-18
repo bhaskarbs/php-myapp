@@ -9,6 +9,13 @@ use yii\filters\ContentNegotiator;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\Response;
+use app\models\Post;
+use Lcobucci\JWT\Configuration;
+use Lcobucci\JWT\Validation\Constraint\SignedWith;
+use Lcobucci\JWT\Validation\Constraint\StrictValidAt;
+use Lcobucci\JWT\Signer\Hmac\Sha256;
+use Lcobucci\JWT\Signer\Key\InMemory;
+use Lcobucci\Clock\SystemClock;
 
 class PostsController extends Controller
 {
@@ -28,6 +35,7 @@ class PostsController extends Controller
                 'actions' => [
                     'index' => ['GET'],
                     'combined' => ['GET'],
+                    'create' => ['POST'],
                 ],
             ],
         ];
@@ -110,5 +118,28 @@ class PostsController extends Controller
         }
 
         return ['success' => true, 'posts' => $result['posts'] ?? [], 'comments' => $result['comments'] ?? []];
+    }
+
+    public function actionCreate(): array
+    {
+        $body = Yii::$app->request->bodyParams;
+
+        $model = new Post();
+        $model->load($body, '');
+
+        // allow caller to provide user_id in request body
+        if (!empty($body['user_id'])) {
+            $model->user_id = (int)$body['user_id'];
+        }
+
+        if ($model->save()) {
+            Yii::$app->response->statusCode = 201;
+
+            return ['success' => true, 'data' => $model->toArray()];
+        }
+
+        Yii::$app->response->statusCode = 422;
+
+        return ['success' => false, 'errors' => $model->errors];
     }
 }
