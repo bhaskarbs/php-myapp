@@ -13,3 +13,6 @@ modules:
       - Filesystem
       - Yii2
       - Asserts
+    config:
+      Yii2:
+        transaction: true
